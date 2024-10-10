@@ -1,0 +1,11 @@
+{
+	"name": "canvasity",
+	"license": "ISC",
+	"description": "Canvas library, port of canvas_ity.h",
+
+	"dependencies": {
+		"dplug:core": "~>14.0",
+		"gamut": "~>3.0",
+		"intel-intrinsics": "~>1.0"
+	}
+}
