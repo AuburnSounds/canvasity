@@ -128,11 +128,14 @@ nothrow @nogc:
 
 import core.stdc.stdlib: malloc, free;
 import core.stdc.math: cosf, sinf, tanf, floorf, fmodf, roundf,
-                       sqrtf, acosf, ceilf, atan2f, powf;
+                       sqrtf, acosf, ceilf, atan2f;
 import core.stdc.string: memset, memcpy;
 import dplug.core.vec;
 import dplug.core.nogc;
 import gamut;
+import inteli.emmintrin;
+import inteli.math;
+import std.math;
 
 // Public API enums
 
@@ -236,6 +239,30 @@ enum baseline_style { // TODO rename and provide API to be like in HTML
     ideographic = 3 /// This is a synonym for bottom.
 }
 
+/**
+    The gamma space where colors are manipulated.
+    Proper sRGB conversion to linear and back is very expensive.
+*/
+enum GammaCurve {
+
+    none,   /// Colors are blended in storage space 
+            /// without gamma-conversion beyond going float(fastest) 
+
+    pow2,   /// Colors are squared/sqrt to fake linear space.
+            /// without accounting for sRGB linear part.
+
+    linear, /// Colors converted to linear space before blend (slowest)
+}
+
+/**
+    Options you can give while initializing a `Canvasity`.
+*/
+struct CanvasOptions {
+
+    /// Default: highest quality.
+    GammaCurve gammaCurve = GammaCurve.linear;
+}
+
 
 /**
     Main canvas API.
@@ -268,20 +295,21 @@ public:
        
         Params: 
             buffer  Buffer to use as output. Not cleared on init.
-            width   Horizontal size in pixels.
-            height  Vertical size in pixels.
-            stride  Bytes between adjacent lines.
+            options Creation options.
     */
-    this(ref Image buffer) {
+    this(ref Image buffer, 
+         CanvasOptions options = CanvasOptions.init) {
 
-        initialize(buffer);
+        initialize(buffer, options);
     }
     ///ditto
-    void initialize(ref Image buffer) {
+    void initialize(ref Image buffer,
+                    CanvasOptions options = CanvasOptions.init) {
 
         // Initialize as reference.
         outBitmap = buffer.layer(0);
 
+        this.options = options;
         this.size_x = outBitmap.width();
         this.size_y = outBitmap.height();
 
@@ -516,7 +544,8 @@ public:
     @savedBySaveRestore
     void shadowColor(float r, float g, float b, float a) {
         rgba c = rgba(r,g,b,a);
-        c = linearized(clamped(c));
+        c = clamped(c);
+        fromGammaSpace((&c)[0..1], options.gammaCurve);
         current.shadow_color = premultiplied(c);
     }
     // TODO: getter, store shadow color as original and lazily convert
@@ -1957,7 +1986,8 @@ private:
     // State stack.    
     // +1 to be able to call `save()` maxSaveRestoreDepth times.
     int _stateCount = 0;
-    State* _state;    
+    State* _state;
+    CanvasOptions options;
 
     // ".current" state is the last element of that stack.
     // Holds current color, transforms, etc.
@@ -1974,8 +2004,12 @@ private:
         brush.type = paint_brush.types.color;
         assert(brush.colors.alignment != 0);
         brush.colors.clearContents();
-        brush.colors.pushBack( premultiplied( linearized( clamped(
-            rgba( red, green, blue, alpha ) ) ) ) );
+
+        // TODO: proper gammaspace
+        rgba c = rgba(red, green, blue, alpha);
+        c = clamped(c);
+        fromGammaSpace((&c)[0..1], options.gammaCurve);
+        brush.colors.pushBack( premultiplied(c) );
     }
 
     // Tessellate (at low-level) a cubic Bezier curve and add it to the polyline
@@ -2668,6 +2702,7 @@ private:
                 int index = y * stride + x * 4;
                 rgba color = rgba(image[ index + 0 ] / 255.0f, image[ index + 1 ] / 255.0f,
                                   image[ index + 2 ] / 255.0f, image[ index + 3 ] / 255.0f );
+                // TODO proper gammaspace
                 brush.colors.pushBack( premultiplied( linearized( color ) ) );
             }
         brush.width = width;
@@ -3123,6 +3158,7 @@ private:
             }
         }
 
+        // TODO proper gamma
         if ( index == 0 )
             return premultiplied( brush.colors[0] );
         if ( index == brush.stops.length )
@@ -3289,9 +3325,10 @@ private:
 
                 // 2. Background is made delinearized then premultiplied
                 rgba* scan = cast(rgba*) scanBuf.ptr;
+                fromGammaSpace(scan[0..scanWidth], options.gammaCurve);
                 for(int n = 0; n < scanWidth; ++n)
                 {
-                    scan[n] = premultiplied(linearized(scan[n]));
+                    scan[n] = premultiplied(scan[n]);
                 }
 
                 // 3. Render shadow
@@ -3319,8 +3356,9 @@ private:
                 // 4. Unpremultiply and put back in gamma-space.
                 for(int n = 0; n < scanWidth; ++n)
                 {
-                    scan[n] = delinearized(unpremultiplied(scan[n]));
+                    scan[n] = unpremultiplied(scan[n]);
                 }
+                toGammaSpace(scan[0..scanWidth], options.gammaCurve);
 
                 // 5. Convert pixels [x..to] to rgbaf32
                 scanlinesConvert(PixelType.rgbaf32,
@@ -3400,12 +3438,13 @@ private:
 
                 // 2. Background is made delinearized then premultiplied
                 rgba* scan = cast(rgba*) scanBuf.ptr;
+                fromGammaSpace(scan[0..scanWidth], options.gammaCurve);
                 for(int n = 0; n < scanWidth; ++n)
                 {
-                    scan[n] = premultiplied(linearized(scan[n]));
+                    scan[n] = premultiplied(scan[n]);
                 }
 
-                // 3. Render shadow
+                // 3. Render main
                 for(int n = 0; n < scanWidth; ++n)
                 {
                     rgba back = scan[n];
@@ -3431,8 +3470,9 @@ private:
                 // 4. Unpremultiply and put back in gamma-space.
                 for(int n = 0; n < scanWidth; ++n)
                 {
-                    scan[n] = delinearized(unpremultiplied(scan[n]));
+                    scan[n] = unpremultiplied(scan[n]);
                 }
+                toGammaSpace(scan[0..scanWidth], options.gammaCurve);
 
                 // 5. Convert pixels [x..to] to rgbaf32
                 scanlinesConvert(PixelType.rgbaf32,
@@ -3657,40 +3697,90 @@ private
         }
     }
 
-    float linearized( float value ) 
+/*    float linearized( float value ) 
     {
-        // PERF: use _mm_pow_ss
         return value < 0.04045f ? value / 12.92f :
-            powf( ( value + 0.055f ) / 1.055f, 2.4f ); 
-    }
-
-    rgba linearized(rgba col) 
-    {
-        // PERF: use _mm_pow_ps
-        return rgba(linearized( col.r ), 
-                    linearized( col.g ),
-                    linearized( col.b ), col.a);
-    }
-
-    rgba premultiplied( rgba col ) 
-    {
-        return rgba(col.r*col.a, col.g*col.a, col.b*col.a, col.a); 
+            _mm_pow_ss( ( value + 0.055f ) / 1.055f, 2.4f ); 
     }
 
     float delinearized( float value ) 
     {
-        // PERF: use _mm_pow_ss
         return value < 0.0031308f ? 12.92f * value 
-                                  : 1.055f * powf(value, 1.0f/2.4f) 
-                                    - 0.055f; 
+            : 1.055f * _mm_pow_ss(value, 1.0f/2.4f) 
+            - 0.055f; 
+    }
+*/
+    void fromGammaSpace(rgba[] arr, GammaCurve gammaCurve)
+    {
+        final switch(gammaCurve)
+        {
+            case GammaCurve.linear:
+                foreach(ref col; arr)
+                    col = linearized(col);
+                break;
+            case GammaCurve.pow2:
+                foreach(ref col; arr) {
+                    col.r = col.r * col.r;
+                    col.g = col.g * col.g;
+                    col.b = col.b * col.b;
+                }
+                break;
+            case GammaCurve.none:
+                break;
+        }
     }
 
-    rgba delinearized( rgba that ) 
+    void toGammaSpace(rgba[] arr, GammaCurve gammaCurve)
     {
-        // PERF: use _mm_pow_ps
-        return rgba(delinearized( that.r ), 
-                    delinearized( that.g ), 
-                    delinearized( that.b ), that.a);
+        final switch(gammaCurve)
+        {
+            case GammaCurve.linear:
+                foreach(ref col; arr)
+                    col = delinearized(col);
+                break;
+            case GammaCurve.pow2:
+                foreach(ref col; arr) {
+                    col.r = sqrtf(col.r);
+                    col.g = sqrtf(col.g);
+                    col.b = sqrtf(col.b);
+                }
+                break;
+            case GammaCurve.none:
+                break;
+        }
+    }
+
+
+    // Convert sRGB 0 to 1 to linear space 0 to 1
+    rgba linearized( rgba col ) 
+    {
+        __m128 c = _mm_loadu_ps(cast(float*)&col);
+        __m128 top = _mm_pow_ps( _mm_add_ps(c,_mm_set1_ps(0.055f)) * _mm_set1_ps(0.94786729857), _mm_set1_ps(2.4f));
+        __m128 bottom = _mm_set1_ps(0.0773993808f) * c;
+        __m128 mask = _mm_cmplt_ps(c, _mm_set1_ps(0.04045f));
+        c = _mm_or_ps(_mm_and_ps(mask, bottom), _mm_andnot_ps(mask, top));
+        c.ptr[3] = col.a;
+        _mm_storeu_ps(cast(float*)&col, c);
+        return col;
+    }
+
+    rgba delinearized(rgba col) 
+    {
+        __m128 c = _mm_loadu_ps(cast(float*)&col);
+        __m128 top = _mm_pow_ps(c, _mm_set1_ps(0.41666666666f)) * _mm_set1_ps(1.055f) - _mm_set1_ps(0.055f);
+        __m128 bottom = _mm_set1_ps(12.92f) * c;
+        __m128 mask = _mm_cmplt_ps(c, _mm_set1_ps(0.0031308f));
+        c = _mm_or_ps(_mm_and_ps(mask, bottom), _mm_andnot_ps(mask, top));
+        c.ptr[3] = col.a;
+        _mm_storeu_ps(cast(float*)&col, c);
+        return col;
+    }
+
+
+
+    rgba premultiplied( rgba col ) 
+    {
+        return rgba(col.r*col.a, col.g*col.a, col.b*col.a, col.a); 
     }
 
     rgba unpremultiplied( rgba that ) 
@@ -3781,15 +3871,6 @@ private
         a.clearContents();
         a.pushBack(cast(Vec!T) b);
     }
-
-  /*  void swap_vec(T)(ref Vec!T a, ref Vec!T b)
-    {
-        // remove that functions, the call points do not need a swap
-        Vec!T c;
-        assign_vec(c, a);
-        assign_vec(a, b);
-        assign_vec(b, c);
-    }*/
 
     void swap_brush(ref paint_brush a, 
                     ref paint_brush b, 
