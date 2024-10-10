@@ -49,10 +49,7 @@ void main()
         Image image;
         image.create( 733, 757 );
 
-        CanvasOptions options;
-        options.gammaCurve = GammaCurve.none;
-
-        that.initialize(image, options);
+        that.initialize(image);
 
         that.clearRect(0, 0, 733, 757);
 

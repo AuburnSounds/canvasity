@@ -242,14 +242,19 @@ enum baseline_style { // TODO rename and provide API to be like in HTML
 /**
     The gamma space where colors are manipulated.
     Proper sRGB conversion to linear and back is very expensive.
+
+    Note: alpha itself is always kept as is and considered linear.
 */
 enum GammaCurve {
 
     none,   /// Colors are blended in storage space 
-            /// without gamma-conversion beyond going float(fastest) 
+            /// without gamma-conversion beyond going float(fastest).
+            /// It can look way worse than the other modes.
 
     pow2,   /// Colors are squared/sqrt to fake linear space.
             /// without accounting for sRGB linear part.
+            /// Essentially nearly the quality of linear at much 
+            /// cheaper cost.
 
     linear, /// Colors converted to linear space before blend (slowest)
 }
@@ -259,8 +264,8 @@ enum GammaCurve {
 */
 struct CanvasOptions {
 
-    /// Default: highest quality.
-    GammaCurve gammaCurve = GammaCurve.linear;
+    /// Default: medium quality.
+    GammaCurve gammaCurve = GammaCurve.pow2;
 }
 
 
@@ -2702,8 +2707,8 @@ private:
                 int index = y * stride + x * 4;
                 rgba color = rgba(image[ index + 0 ] / 255.0f, image[ index + 1 ] / 255.0f,
                                   image[ index + 2 ] / 255.0f, image[ index + 3 ] / 255.0f );
-                // TODO proper gammaspace
-                brush.colors.pushBack( premultiplied( linearized( color ) ) );
+                fromGammaSpace((&color)[0..1], options.gammaCurve);
+                brush.colors.pushBack( premultiplied( color ) );
             }
         brush.width = width;
         brush.height = height;
@@ -3158,7 +3163,6 @@ private:
             }
         }
 
-        // TODO proper gamma
         if ( index == 0 )
             return premultiplied( brush.colors[0] );
         if ( index == brush.stops.length )
@@ -3712,6 +3716,20 @@ private
 */
     void fromGammaSpace(rgba[] arr, GammaCurve gammaCurve)
     {
+        // Convert sRGB 0 to 1 to linear space 0 to 1
+        static rgba linearized( rgba col ) 
+        {
+            __m128 c = _mm_loadu_ps(cast(float*)&col);
+            __m128 top = _mm_pow_ps( _mm_add_ps(c,_mm_set1_ps(0.055f)) * _mm_set1_ps(0.94786729857), _mm_set1_ps(2.4f));
+            __m128 bottom = _mm_set1_ps(0.0773993808f) * c;
+            __m128 mask = _mm_cmplt_ps(c, _mm_set1_ps(0.04045f));
+            c = _mm_or_ps(_mm_and_ps(mask, bottom), _mm_andnot_ps(mask, top));
+            c.ptr[3] = col.a;
+            _mm_storeu_ps(cast(float*)&col, c);
+            return col;
+        }
+
+
         final switch(gammaCurve)
         {
             case GammaCurve.linear:
@@ -3732,6 +3750,18 @@ private
 
     void toGammaSpace(rgba[] arr, GammaCurve gammaCurve)
     {
+        static rgba delinearized(rgba col) 
+        {
+            __m128 c = _mm_loadu_ps(cast(float*)&col);
+            __m128 top = _mm_pow_ps(c, _mm_set1_ps(0.41666666666f)) * _mm_set1_ps(1.055f) - _mm_set1_ps(0.055f);
+            __m128 bottom = _mm_set1_ps(12.92f) * c;
+            __m128 mask = _mm_cmplt_ps(c, _mm_set1_ps(0.0031308f));
+            c = _mm_or_ps(_mm_and_ps(mask, bottom), _mm_andnot_ps(mask, top));
+            c.ptr[3] = col.a;
+            _mm_storeu_ps(cast(float*)&col, c);
+            return col;
+        }
+
         final switch(gammaCurve)
         {
             case GammaCurve.linear:
@@ -3740,43 +3770,16 @@ private
                 break;
             case GammaCurve.pow2:
                 foreach(ref col; arr) {
-                    col.r = sqrtf(col.r);
-                    col.g = sqrtf(col.g);
-                    col.b = sqrtf(col.b);
+                    __m128 c = _mm_loadu_ps(cast(float*)&col);
+                    c = _mm_sqrt_ps(c);
+                    c.ptr[3] = col.a;
+                    _mm_storeu_ps(cast(float*)&col, c);
                 }
                 break;
             case GammaCurve.none:
                 break;
         }
     }
-
-
-    // Convert sRGB 0 to 1 to linear space 0 to 1
-    rgba linearized( rgba col ) 
-    {
-        __m128 c = _mm_loadu_ps(cast(float*)&col);
-        __m128 top = _mm_pow_ps( _mm_add_ps(c,_mm_set1_ps(0.055f)) * _mm_set1_ps(0.94786729857), _mm_set1_ps(2.4f));
-        __m128 bottom = _mm_set1_ps(0.0773993808f) * c;
-        __m128 mask = _mm_cmplt_ps(c, _mm_set1_ps(0.04045f));
-        c = _mm_or_ps(_mm_and_ps(mask, bottom), _mm_andnot_ps(mask, top));
-        c.ptr[3] = col.a;
-        _mm_storeu_ps(cast(float*)&col, c);
-        return col;
-    }
-
-    rgba delinearized(rgba col) 
-    {
-        __m128 c = _mm_loadu_ps(cast(float*)&col);
-        __m128 top = _mm_pow_ps(c, _mm_set1_ps(0.41666666666f)) * _mm_set1_ps(1.055f) - _mm_set1_ps(0.055f);
-        __m128 bottom = _mm_set1_ps(12.92f) * c;
-        __m128 mask = _mm_cmplt_ps(c, _mm_set1_ps(0.0031308f));
-        c = _mm_or_ps(_mm_and_ps(mask, bottom), _mm_andnot_ps(mask, top));
-        c.ptr[3] = col.a;
-        _mm_storeu_ps(cast(float*)&col, c);
-        return col;
-    }
-
-
 
     rgba premultiplied( rgba col ) 
     {
