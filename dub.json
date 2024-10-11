@@ -6,6 +6,7 @@
 	"dependencies": {
 		"dplug:core": "~>14.0",
 		"gamut": "~>3.0",
-		"intel-intrinsics": "~>1.0"
+		"intel-intrinsics": "~>1.0",
+		"colors": "~>0.0",
 	}
 }

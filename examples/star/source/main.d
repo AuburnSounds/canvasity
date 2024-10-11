@@ -19,9 +19,6 @@ void render(PixelType type, PixelType beforeWrite, string filepath)
     Image image;
     image.createNoInit(width, height, type); // rgba8
 
-    // Note: this does NOT clear the image, which is externally owned.
-    // If you reuse the same Canvasity struct, all allocations will 
-    // be reused eventually, leading to zero allocation per frame.
     Canvasity context = Canvasity(image);
 
     // Build a star path.
@@ -35,16 +32,16 @@ void render(PixelType type, PixelType beforeWrite, string filepath)
     // Set up the drop shadow.
     context.shadowBlur = 8.0f;
     context.shadowOffsetY = 4.0f;
-    context.shadowColor(0.0f, 0.0f, 0.0f, 0.5f);
+    context.shadowColor("#00000080");
 
     // Fill the star with yellow.
-    context.fillStyle(1.0f, 1.0f, 0.0f, 1.0f );
+    context.fillStyle("yellow");
     context.fill();
 
     // Draw the star with a thick red stroke and rounded points.
     context.lineJoin = "round";
     context.lineWidth = 12.0f;
-    context.strokeStyle(0.9f, 0.0f, 0.5f, 1.0f);
+    context.strokeStyle("rgba(95%, 65%, 15%, 100%)");
     context.stroke();
 
     // Draw the star again with a dashed thinner orange stroke.
@@ -53,11 +50,11 @@ void render(PixelType type, PixelType beforeWrite, string filepath)
     context.lineDashOffset = 10.0f;
     context.lineCap = "circle";
     context.lineWidth = 6.0f;
-    context.strokeStyle(0.95f, 0.65f, 0.15f, 1.0f );
+    context.strokeStyle("rgb(95%, 65%, 15%)");
     context.stroke();
 
     // Turn off the drop shadow.
-    context.shadowColor( 0.0f, 0.0f, 0.0f, 0.0f );
+    context.shadowColor("transparent");
 
 
     /*   // Add a shine layer over the star.

@@ -133,6 +133,7 @@ import core.stdc.string: memset, memcpy;
 import dplug.core.vec;
 import dplug.core.nogc;
 import gamut;
+import colors;
 import inteli.emmintrin;
 import inteli.math;
 import std.math;
@@ -301,6 +302,10 @@ public:
         Params: 
             buffer  Buffer to use as output. Not cleared on init.
             options Creation options.
+
+        Warning: this does NOT clear the image. If you reuse the same
+         Canvasity struct, all allocations will be reused eventually, 
+         leading to zero allocation per frame.
     */
     this(ref Image buffer, 
          CanvasOptions options = CanvasOptions.init) {
@@ -334,8 +339,8 @@ public:
         // Reset stack, some allocation will linger if canvas reused.
         _stateCount = 1;
 
-        fillStyle(0.0f, 0.0f, 0.0f, 1.0f);
-        strokeStyle(0.0f, 0.0f, 0.0f, 1.0f);
+        fillStyle("black");
+        strokeStyle("black");
         
         // Initialize clipping state
         // PERF: create that lazily?
@@ -529,32 +534,43 @@ public:
     /** 
         Set the color and opacity of the shadow.
         
-        Most drawing operations can optionally draw a blurred drop 
-        shadow before doing the main drawing. The shadow is modulated 
-        by the opacity of the drawing and will be blended into the 
-        existing pixels subject to the compositing settings and 
-        clipping region. Shadows will only be drawn if the shadow 
-        color has any opacity and the shadow is either offset or 
-        blurred. The color and opacity values will be clamped to
-        the 0.0 to 1.0 range, inclusive. 
+        Shadows will only be drawn if the shadow color has any 
+        opacity and the shadow is either offset or blurred.
 
-        Defaults to 0.0, 0.0, 0.0, 0.0 (transparent black).
-        
-        Params:
-            r  sRGB red component of the shadow color
-            g  sRGB green component of the shadow color
-            b  sRGB blue component of the shadow color
-            a  opacity of the shadow (not premultiplied)
+        Defaults to transparent black.
+
+        Can give:
+        - a `Color`, such as one obtained by the `colors` package
+        - a CSS string, 
+        - a `RGBA8` 8-bit sRGB ubyte quadruplet
+        - a `RGBA16` 16-bit sRGB ubyte quadruplet
+        - a `RGBAf` 32-bit sRGB ubyte quadruplet
     */
     @savedBySaveRestore
-    void shadowColor(float r, float g, float b, float a) {
-        rgba c = rgba(r,g,b,a);
+    void shadowColor(Color col) {
+        RGBAf co = col.toRGBAf();
+        rgba c = rgba(co.r,co.g,co.b,co.a);
         c = clamped(c);
         fromGammaSpace((&c)[0..1], options.gammaCurve);
         current.shadow_color = premultiplied(c);
     }
-    // TODO: getter, store shadow color as original and lazily convert
-    // TOOD: set_shadow_color should take sRGB 8-bit color
+    ///ditto
+    void shadowColor(const(char)[] cssColor) {
+        shadowColor(Color(cssColor));
+    }
+    ///ditto
+    void shadowColor(RGBAf col)  { shadowColor(Color(col)); }
+    ///ditto
+    void shadowColor(RGBA8 col)  { shadowColor(Color(col)); }
+    ///ditto
+    void shadowColor(RGBA16 col) { shadowColor(Color(col)); }
+    // <old method of original library>
+    deprecated void shadowColor(float r, float g, float b, float a) {
+        shadowColor(RGBAf(r, g, b, a));
+    }
+    // </old method of original library>
+
+    // TODO: getter, store shadow color as Color
 
 
     /**
@@ -777,25 +793,57 @@ public:
     /** 
         Set filling or stroking to use a constant color and opacity.
 
-        The color and opacity values will be clamped to the 0.0 to 1.0 
-        range, inclusive. Filling and stroking defaults a constant 
-        color with 0.0, 0.0, 0.0, 1.0 (opaque black).
-    
-        Params:
-            r Red component, in sRGB 0.0f to 1.0f range.
-            g Green component, in sRGB 0.0f to 1.0f range.
-            b Blue component, in sRGB 0.0f to 1.0f range.
-            a Opacity to paint with, 0.0f to 1.0f.
+        Can give:
+        - a `Color`, such as one obtained by the `colors` package
+        - a CSS string, 
+        - a `RGBA8` 8-bit sRGB ubyte quadruplet
+        - a `RGBA16` 16-bit sRGB ubyte quadruplet
+        - a `RGBAf` 32-bit sRGB ubyte quadruplet
     */
     @savedBySaveRestore
-    void fillStyle(float r, float g, float b, float a) {
-        set_color(brush_type.fill_style, r, g, b, a);
+    void fillStyle(Color col) {
+        RGBAf c = col.toRGBAf();
+        set_color(brush_type.fill_style, c.r, c.g, c.b, c.a);
     }
     ///ditto
+    void fillStyle(const(char)[] cssColor) {
+        fillStyle(Color(cssColor));
+    }
+    ///ditto
+    void fillStyle(RGBAf col)  { fillStyle(Color(col)); }
+    ///ditto
+    void fillStyle(RGBA8 col)  { fillStyle(Color(col)); }
+    ///ditto
+    void fillStyle(RGBA16 col) { fillStyle(Color(col)); }
+
+    ///ditto
     @savedBySaveRestore
+    void strokeStyle(Color col) {
+        RGBAf c = col.toRGBAf();
+        set_color(brush_type.stroke_style, c.r, c.g, c.b, c.a);
+    }
+    ///ditto
+    void strokeStyle(const(char)[] cssColor) {
+        strokeStyle(Color(cssColor));
+    }
+    ///ditto
+    void strokeStyle(RGBAf col)  { strokeStyle(Color(col)); }
+    ///ditto
+    void strokeStyle(RGBA8 col)  { strokeStyle(Color(col)); }
+    ///ditto
+    void strokeStyle(RGBA16 col) { strokeStyle(Color(col)); }
+
+    // <Old canvasity ways to give a color>
+    deprecated("Use fillStyle(str or Color) or fillStyle(colors.Color) instead") 
+        void fillStyle(float r, float g, float b, float a) {
+            set_color(brush_type.fill_style, r, g, b, a);
+    }
+    deprecated("Use strokeStyle(str or Color) instead")
     void strokeStyle(float r, float g, float b, float a) {
         set_color(brush_type.stroke_style, r, g, b, a);
     }
+    // </Old canvasity ways to give a color>
+
 
     // Note: the following doesn't follow the HTML5 Canvas API, which 
     // is different from dplug:canvas unfortunately.
