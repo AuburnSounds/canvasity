@@ -2058,7 +2058,6 @@ private:
         assert(brush.colors.alignment != 0);
         brush.colors.clearContents();
 
-        // TODO: proper gammaspace
         rgba c = rgba(red, green, blue, alpha);
         c = clamped(c);
         fromGammaSpace((&c)[0..1], options.gammaCurve);
