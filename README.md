@@ -43,7 +43,11 @@ This buffer must be a [`gamut`](https://github.com/AuburnSounds/gamut) `Image`.
 
 # Examples
 
+
+
 ## 1. Drawing rectangles
+
+![Rect example](https://github.com/AuburnSounds/canvasity/blob/main/rect-example.png?raw=true)
 
 ```d
 import canvasity;
@@ -64,11 +68,14 @@ void main() {
 
     image.saveToFile("output-rectangle.png");
 }
-```d
+```
 
 ## 2. Applying Strokes with .stroke()
 
 This example illustrate how `.fill()` and `.stroke` may be used in any order.
+
+![Stroke example](https://github.com/AuburnSounds/canvasity/blob/main/stroke-example.png?raw=true)
+
 ```d
 import canvasity;
 import gamut;
@@ -104,6 +111,8 @@ void main() {
 ## 3. Adding a shadow to a shape
 
 This example adds a blurred shadow to a rectangle. The `shadowColor` property sets its color, and `shadowBlur` sets its level of blurriness.
+
+![Shadow example](https://github.com/AuburnSounds/canvasity/blob/main/shadow-example.png?raw=true)
 
 ```d
 import canvasity;
