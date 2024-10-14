@@ -1329,7 +1329,7 @@ public:
             width   Width of the rectangle.
             height  Height of the rectangle.
     */       
-    void rectangle(float x, float y, float width, float height) {
+    void rect(float x, float y, float width, float height) {
         moveTo(x, y);
         lineTo(x + width, y);
         lineTo(x + width, y + height);

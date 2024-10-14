@@ -1,7 +1,0 @@
-{
-	"name": "rectangle",
-
-	"dependencies": {
-		"canvasity": { "path": "../.." }
-	}
-}
