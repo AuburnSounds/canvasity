@@ -820,6 +820,14 @@ public:
     void fillStyle(RGBA8 col)  { fillStyle(Color(col)); }
     ///ditto
     void fillStyle(RGBA16 col) { fillStyle(Color(col)); }
+    ///ditto
+    void fillStyle(T)(T col) if (isLikeRGBA8!T) {
+        // Support a color-like struct like Dplug's RGBA
+        fillStyle(RGBA8(cast(ubyte)col.r, 
+                        cast(ubyte)col.g, 
+                        cast(ubyte)col.b, 
+                        cast(ubyte)col.a));
+    }
 
     ///ditto
     @savedBySaveRestore
@@ -837,6 +845,13 @@ public:
     void strokeStyle(RGBA8 col)  { strokeStyle(Color(col)); }
     ///ditto
     void strokeStyle(RGBA16 col) { strokeStyle(Color(col)); }
+    ///ditto
+    void strokeStyle(T)(T rgba)  if (isLikeRGBA8!T) {
+        strokeStyle(RGBA8(cast(ubyte)rgba.r, 
+                          cast(ubyte)rgba.g, 
+                          cast(ubyte)rgba.b, 
+                          cast(ubyte)rgba.a));
+    }
 
     // <Old canvasity ways to give a color>
     deprecated("Use fillStyle(str or Color) instead") 
@@ -2060,7 +2075,6 @@ private:
                               &(current.fill_brush) 
                             : &(current.stroke_brush);
         brush.type = paint_brush.types.color;
-        assert(brush.colors.alignment != 0);
         brush.colors.clearContents();
 
         rgba c = rgba(red, green, blue, alpha);
@@ -3627,6 +3641,17 @@ int comparePixelRuns(in pixel_run a, in pixel_run b )
 // Implementation details
 private
 {
+    template isLikeRGBA8(T)
+    {
+        enum isLikeRGBA8 = 
+              !is(T==RGBA8)
+            && T.sizeof == 4 
+            && __traits(hasMember, T, "r")
+            && __traits(hasMember, T, "g")
+            && __traits(hasMember, T, "b")
+            && __traits(hasMember, T, "a");
+    }
+
     float fabsf(float a)
     {
         return a >= 0 ? a : -a;
