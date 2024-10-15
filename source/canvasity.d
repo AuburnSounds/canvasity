@@ -374,6 +374,13 @@ public:
     }
 
     ~this() {
+
+        // free each State
+        size_t stackSize = (maxSaveRestoreDepth + 1);
+        for (size_t n = 0; n < stackSize; ++n) {
+            _state[n].free();
+        }
+
         free( _state);
     }
 
@@ -2026,8 +2033,8 @@ private:
         font_face face;
 
         // that assign ensures amortized allocation by reusing vectors
-        void opAssign(ref const(State) other)
-        {
+        void opAssign(ref const(State) other) {
+
             this.global_op        = other.global_op;
             this.shadow_offset_x  = other.shadow_offset_x;
             this.shadow_offset_y  = other.shadow_offset_y;
@@ -2049,6 +2056,14 @@ private:
             assign_vec!pixel_run(this.mask, other.mask);
             this.face = other.face;
         }
+
+        void free() {
+            destroyNoGC(line_dash);
+            destroyNoGC(stroke_brush);
+            destroyNoGC(fill_brush);
+            destroyNoGC(mask);
+        }
+
     }
     
     paint_brush image_brush; // Note: not sure why not in State
@@ -3787,19 +3802,6 @@ private
         }
     }
 
-/*    float linearized( float value ) 
-    {
-        return value < 0.04045f ? value / 12.92f :
-            _mm_pow_ss( ( value + 0.055f ) / 1.055f, 2.4f ); 
-    }
-
-    float delinearized( float value ) 
-    {
-        return value < 0.0031308f ? 12.92f * value 
-            : 1.055f * _mm_pow_ss(value, 1.0f/2.4f) 
-            - 0.055f; 
-    }
-*/
     void fromGammaSpace(rgba[] arr, GammaCurve gammaCurve)
     {
         // Convert sRGB 0 to 1 to linear space 0 to 1
