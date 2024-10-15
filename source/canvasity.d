@@ -122,6 +122,12 @@
     2. Use public methods of `Canvasity`.
 */
 /// D Port of canvas_ity.h 
+/// Modifications:
+/// * some SIMD
+/// * buffer is passed and external instead of owned, it can be any
+///   format
+/// * removal of text, gradients, patterns, TODO add them back
+/// * integration with `gamut` and `colors`
 module canvasity;
 
 nothrow @nogc:
@@ -136,7 +142,6 @@ import gamut;
 import colors;
 import inteli.emmintrin;
 import inteli.math;
-import std.math;
 
 // Public API enums
 
@@ -257,7 +262,7 @@ enum GammaCurve {
             /// Essentially nearly the quality of linear at much 
             /// cheaper cost.
 
-    linear, /// Colors converted to linear space before blend (slowest)
+    linear, /// Colors converted to linear space before blend (slow).
 }
 
 /**
@@ -834,7 +839,7 @@ public:
     void strokeStyle(RGBA16 col) { strokeStyle(Color(col)); }
 
     // <Old canvasity ways to give a color>
-    deprecated("Use fillStyle(str or Color) or fillStyle(colors.Color) instead") 
+    deprecated("Use fillStyle(str or Color) instead") 
         void fillStyle(float r, float g, float b, float a) {
             set_color(brush_type.fill_style, r, g, b, a);
     }
