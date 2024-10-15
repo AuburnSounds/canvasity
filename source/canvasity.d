@@ -340,6 +340,15 @@ public:
                 memcpy(&_state[n], &i, State.sizeof);
             }
         }
+        else
+        {
+            // Reset state[0] to State.init, without overriding the Vec
+            // allocations
+            {
+                State initial;
+                _state[0] = initial;
+            }
+        }
 
         // Reset stack, some allocation will linger if canvas reused.
         _stateCount = 1;
@@ -1998,18 +2007,18 @@ private:
         CompositeOperation global_op = CompositeOperation.sourceOver;
         float shadow_offset_x        = 0.0f;
         float shadow_offset_y        = 0.0f;
-        LineCap line_cap       = LineCap.butt;
-        LineJoin line_join     = LineJoin.miter;
+        LineCap line_cap             = LineCap.butt;
+        LineJoin line_join           = LineJoin.miter;
         float line_dash_offset       = 0.0f;
         align_style text_align       = align_style.start;
         baseline_style text_baseline = baseline_style.alphabetic;
-        affine_matrix forward = affine_matrix.identity;
-        affine_matrix inverse = affine_matrix.identity;
-        float global_alpha = 1.0f;
-        rgba shadow_color = rgba(0.0f, 0.0f, 0.0f, 0.0f);
-        float shadow_blur = 0.0f;
-        float line_width = 1.0f;
-        float miter_limit = 10.0f;
+        affine_matrix forward        = affine_matrix.identity;
+        affine_matrix inverse        = affine_matrix.identity;
+        float global_alpha           = 1.0f;
+        rgba shadow_color            = rgba(0.0f, 0.0f, 0.0f, 0.0f);
+        float shadow_blur            = 0.0f;
+        float line_width             = 1.0f;
+        float miter_limit            = 10.0f;
         Vec!float line_dash;
         paint_brush fill_brush;
         paint_brush stroke_brush;
