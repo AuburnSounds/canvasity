@@ -152,8 +152,7 @@ import inteli.math;
     the new drawing but within the clip region. Defaults to:
     `sourceOver`.
 */
-enum CanvasCompositeOperation {
-
+enum CanvasCompositeOp {
     sourceIn = 1,   /// Replace old with new where old was opaque.
     sourceCopy,     /// Replace old with new.
     sourceOut,      /// Replace old with new where old is transparent.
@@ -522,6 +521,42 @@ public:
 
 
     // ======== COMPOSITING ========
+
+
+    /**
+        Set/get the compositing operation for blending new drawing
+        and old pixels.
+    */
+    @savedBySaveRestore
+    void globalCompositeOperation(CanvasCompositeOp op) {
+        current.op = op;
+    }
+    ///ditto
+    void globalCompositeOperation(const(char)[] compositeOp) {
+
+        CanvasCompositeOp op;
+        switch(compositeOp) with (CanvasCompositeOp) {
+            case "source-in":        op = sourceIn;        break;
+            case "copy":             op = sourceCopy;      break;
+            case "source-out":       op = sourceOut;       break;
+            case "destination-in":   op = destinationIn;   break;
+            case "destination-atop": op = destinationAtop; break;
+            case "add":              op = add;             break;
+            case "lighter":          op = lighter;         break;
+            case "destination-over": op = destinationOver; break;
+            case "destination-out":  op = destinationOut;  break;
+            case "source-atop":      op = sourceAtop;      break;
+            case "source-over":      op = sourceOver;      break;
+            case "xor":              op = exclusiveOr;     break;
+            default: return; // ignored
+        }
+        current.op = op;
+    }
+    ///ditto
+    CanvasCompositeOp globalCompositeOperation() {
+        return current.op;
+    }
+
 
 
     /**
@@ -1558,12 +1593,12 @@ public:
     */       
     void clearRect(float x, float y, float width, float height) {
 
-        CanvasCompositeOperation saved_operation = current.global_op;
+        CanvasCompositeOp saved_operation  = current.op;
         float saved_global_alpha           = current.global_alpha;
         float saved_alpha                  = current.shadow_color.a;
         paint_brush.types saved_type       = current.fill_brush.type;
         
-        current.global_op       = CanvasCompositeOperation.destinationOut;
+        current.op              = CanvasCompositeOp.destinationOut;
         current.global_alpha    = 1.0f;
         current.shadow_color.a  = 0.0f;
         current.fill_brush.type = paint_brush.types.color;
@@ -1573,7 +1608,7 @@ public:
         current.fill_brush.type = saved_type;
         current.shadow_color.a  = saved_alpha;
         current.global_alpha    = saved_global_alpha;
-        current.global_op       = saved_operation;
+        current.op              = saved_operation;
     }
 
 
@@ -2011,8 +2046,7 @@ private:
     {
     nothrow @nogc:
         @disable this(this);
-        CanvasCompositeOperation global_op = 
-                                 CanvasCompositeOperation.sourceOver;
+        CanvasCompositeOp op         = CanvasCompositeOp.sourceOver;
         float shadow_offset_x        = 0.0f;
         float shadow_offset_y        = 0.0f;
         CanvasLineCap line_cap       = CanvasLineCap.butt;
@@ -2036,7 +2070,7 @@ private:
         // that assign ensures amortized allocation by reusing vectors
         void opAssign(ref const(State) other) {
 
-            this.global_op        = other.global_op;
+            this.op               = other.op;
             this.shadow_offset_x  = other.shadow_offset_x;
             this.shadow_offset_y  = other.shadow_offset_y;
             this.line_cap         = other.line_cap;
@@ -3389,7 +3423,7 @@ private:
                     shadow[ y * width + x ] = running;
                 }
             }
-        int operation = current.global_op;
+        int operation = current.op;
         int x = -1;
         int y = -1;
         float sum = 0.0f;
@@ -3495,7 +3529,7 @@ private:
 
         render_shadow( brush );
         lines_to_runs( xy( 0.0f, 0.0f ), 0 );
-        int operation = current.global_op;
+        int operation = current.op;
         int x = -1;
         int y = -1;
         float path_sum = 0.0f;
