@@ -2011,7 +2011,7 @@ public:
     void restore() {
 
         // too many restore() without corresponding save()
-        if (_stateCount == 0)
+        if (_stateCount <= 1)
             assert(false); 
 
         _stateCount--;
