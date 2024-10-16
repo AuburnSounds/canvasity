@@ -80,7 +80,7 @@ void main()
 
         that.beginPath();
         that.strokeStyle(0.0f, 0.0f, 0.0f, 1.0f );;
-        that.lineCap = LineCap.butt;
+        that.lineCap = "butt";
         that.lineWidth( 0.252267f );
         that.moveTo( 91.233331f, 335.566670f );
         that.bezierCurveTo( 91.233331f, 335.566670f, 91.435464f, 338.396010f, 90.166664f, 338.366670f );
@@ -2290,7 +2290,7 @@ void main()
 
         that.beginPath();
         that.strokeStyle(0.30196078431372547f, 0.0f, 0.0f, 1.0f );;
-        that.lineCap = LineCap.circle;
+        that.lineCap = "circle";
         that.lineWidth( 2.933333f );
         that.moveTo( 346.033320f, 336.633340f );
         that.bezierCurveTo( 346.033320f, 336.633340f, 324.053330f, 312.026670f, 311.766660f, 308.233340f );

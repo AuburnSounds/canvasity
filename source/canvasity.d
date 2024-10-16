@@ -152,7 +152,7 @@ import inteli.math;
     the new drawing but within the clip region. Defaults to:
     `sourceOver`.
 */
-enum CompositeOperation {
+enum CanvasCompositeOperation {
 
     sourceIn = 1,   /// Replace old with new where old was opaque.
     sourceCopy,     /// Replace old with new.
@@ -176,7 +176,7 @@ enum CompositeOperation {
 
     Defaults to `LineCap.butt`.
 */
-enum LineCap {
+enum CanvasLineCap {
 
     butt,   /// Use a flat cap flush to the end of the line.
     square, /// Use a half-square cap that extends past the end of the
@@ -192,7 +192,7 @@ enum LineCap {
 
     Defaults to `LineJoin.miter`.
 */
-enum LineJoin {
+enum CanvasLineJoin {
 
     miter, /// Continue the ends until they intersect, if within miter
            /// limit.
@@ -202,7 +202,7 @@ enum LineJoin {
 
 
 // TODO comment
-enum repetition_style {
+private enum repetition_style {
 
     repeat, 
     repeat_x, 
@@ -218,7 +218,7 @@ enum repetition_style {
     glyphs.
     Defaults to leftward.
 */
-enum align_style { // TODO rename and provide API to be like in HTML
+private enum align_style { // TODO rename and provide API to be like in HTML
 
     leftward,   /// Draw the text's left edge at the anchor point.
     rightward,  /// Draw the text's right edge at the anchor point.
@@ -234,7 +234,7 @@ enum align_style { // TODO rename and provide API to be like in HTML
 
     Defaults to alphabetic.
 */
-enum baseline_style { // TODO rename and provide API to be like in HTML
+private enum baseline_style { // TODO rename and provide API to be like in HTML
 
     alphabetic, /// Alphabetic baseline as the anchor point.
     top,        /// Top of the em box as the anchor point.
@@ -251,7 +251,7 @@ enum baseline_style { // TODO rename and provide API to be like in HTML
 
     Note: alpha itself is always kept as is and considered linear.
 */
-enum GammaCurve {
+enum CanvasGammaCurve {
 
     none,   /// Colors are blended in storage space 
             /// without gamma-conversion beyond going float(fastest).
@@ -271,7 +271,7 @@ enum GammaCurve {
 struct CanvasOptions {
 
     /// Default: medium quality.
-    GammaCurve gammaCurve = GammaCurve.pow2;
+    CanvasGammaCurve gammaCurve = CanvasGammaCurve.pow2;
 }
 
 
@@ -670,40 +670,40 @@ public:
 
     ///
     @savedBySaveRestore
-    void lineCap(LineCap capStyle) {
+    void lineCap(CanvasLineCap capStyle) {
         current.line_cap = capStyle;
     }
     ///ditto
     void lineCap(const(char)[] capStyle) {
-        switch(capStyle) {
-            case "butt": current.line_cap = LineCap.butt; break;
-            case "square": current.line_cap = LineCap.square; break;
-            case "circle": current.line_cap = LineCap.circle; break;
+        switch(capStyle) with (CanvasLineCap) {
+            case "butt":   current.line_cap = butt; break;
+            case "square": current.line_cap = square; break;
+            case "circle": current.line_cap = circle; break;
             default:
         }
     }
     ///ditto
-    LineCap lineCap() {
+    CanvasLineCap lineCap() {
         return current.line_cap;
     }
 
 
     ///
     @savedBySaveRestore
-    void lineJoin(LineJoin joinStyle) {
+    void lineJoin(CanvasLineJoin joinStyle) {
         current.line_join = joinStyle;
     }
     ///ditto
     void lineJoin(const(char)[] joinStyle) {
-        switch(joinStyle) {
-            case "miter": current.line_join = LineJoin.miter; break;
-            case "bevel": current.line_join = LineJoin.bevel; break;
-            case "round": current.line_join = LineJoin.round; break;
+        switch(joinStyle) with (CanvasLineJoin) {
+            case "miter": current.line_join = miter; break;
+            case "bevel": current.line_join = bevel; break;
+            case "round": current.line_join = round; break;
             default:
         }
     }
     ///ditto
-    LineJoin lineJoin() {
+    CanvasLineJoin lineJoin() {
         return current.line_join;
     }
 
@@ -1558,12 +1558,12 @@ public:
     */       
     void clearRect(float x, float y, float width, float height) {
 
-        CompositeOperation saved_operation = current.global_op;
+        CanvasCompositeOperation saved_operation = current.global_op;
         float saved_global_alpha           = current.global_alpha;
         float saved_alpha                  = current.shadow_color.a;
         paint_brush.types saved_type       = current.fill_brush.type;
         
-        current.global_op       = CompositeOperation.destinationOut;
+        current.global_op       = CanvasCompositeOperation.destinationOut;
         current.global_alpha    = 1.0f;
         current.shadow_color.a  = 0.0f;
         current.fill_brush.type = paint_brush.types.color;
@@ -2011,11 +2011,12 @@ private:
     {
     nothrow @nogc:
         @disable this(this);
-        CompositeOperation global_op = CompositeOperation.sourceOver;
+        CanvasCompositeOperation global_op = 
+                                 CanvasCompositeOperation.sourceOver;
         float shadow_offset_x        = 0.0f;
         float shadow_offset_y        = 0.0f;
-        LineCap line_cap             = LineCap.butt;
-        LineJoin line_join           = LineJoin.miter;
+        CanvasLineCap line_cap       = CanvasLineCap.butt;
+        CanvasLineJoin line_join     = CanvasLineJoin.miter;
         float line_dash_offset       = 0.0f;
         align_style text_align       = align_style.start;
         baseline_style text_baseline = baseline_style.alphabetic;
@@ -2857,10 +2858,10 @@ private:
                     lines.points.pushBack( forwardTransform(side_in) );
                 }
                 if ( ( turn > 0.0f && !tight ) ||
-                     ( turn != 0.0f && current.line_join == LineJoin.miter &&
+                     ( turn != 0.0f && current.line_join == CanvasLineJoin.miter &&
                        dot( offset, offset ) <= ratio ) )
                     lines.points.pushBack( forwardTransform( point + offset ) );
-                else if ( current.line_join == LineJoin.round )
+                else if ( current.line_join == CanvasLineJoin.round )
                 {
                     float cosine = dot( in_direction, out_direction );
                     float angle = acosf(fminf( fmaxf( cosine, -1.0f ), 1.0f ) );
@@ -2900,17 +2901,17 @@ private:
             return;
         xy ahead = half * in_direction;
         xy side = perpendicular( ahead );
-        if ( current.line_cap == LineCap.butt )
+        if ( current.line_cap == CanvasLineCap.butt )
         {
             lines.points.pushBack( forwardTransform(( point + side ) ));
             lines.points.pushBack( forwardTransform(( point - side ) ));
         }
-        else if ( current.line_cap == LineCap.square )
+        else if ( current.line_cap == CanvasLineCap.square )
         {
             lines.points.pushBack( forwardTransform(( point + ahead + side ) ));
             lines.points.pushBack( forwardTransform(( point + ahead - side ) ));
         }
-        else if ( current.line_cap == LineCap.circle )
+        else if ( current.line_cap == CanvasLineCap.circle )
         {
             enum float alpha = 0.55228475f; // 4/3*tan(pi/8)
             lines.points.pushBack( forwardTransform(( point + side ) ));
@@ -3802,7 +3803,7 @@ private
         }
     }
 
-    void fromGammaSpace(rgba[] arr, GammaCurve gammaCurve)
+    void fromGammaSpace(rgba[] arr, CanvasGammaCurve gammaCurve)
     {
         // Convert sRGB 0 to 1 to linear space 0 to 1
         static rgba linearized( rgba col ) 
@@ -3820,23 +3821,23 @@ private
 
         final switch(gammaCurve)
         {
-            case GammaCurve.linear:
+            case CanvasGammaCurve.linear:
                 foreach(ref col; arr)
                     col = linearized(col);
                 break;
-            case GammaCurve.pow2:
+            case CanvasGammaCurve.pow2:
                 foreach(ref col; arr) {
                     col.r = col.r * col.r;
                     col.g = col.g * col.g;
                     col.b = col.b * col.b;
                 }
                 break;
-            case GammaCurve.none:
+            case CanvasGammaCurve.none:
                 break;
         }
     }
 
-    void toGammaSpace(rgba[] arr, GammaCurve gammaCurve)
+    void toGammaSpace(rgba[] arr, CanvasGammaCurve gammaCurve)
     {
         static rgba delinearized(rgba col) 
         {
@@ -3852,11 +3853,11 @@ private
 
         final switch(gammaCurve)
         {
-            case GammaCurve.linear:
+            case CanvasGammaCurve.linear:
                 foreach(ref col; arr)
                     col = delinearized(col);
                 break;
-            case GammaCurve.pow2:
+            case CanvasGammaCurve.pow2:
                 foreach(ref col; arr) {
                     __m128 c = _mm_loadu_ps(cast(float*)&col);
                     c = _mm_sqrt_ps(c);
@@ -3864,7 +3865,7 @@ private
                     _mm_storeu_ps(cast(float*)&col, c);
                 }
                 break;
-            case GammaCurve.none:
+            case CanvasGammaCurve.none:
                 break;
         }
     }
