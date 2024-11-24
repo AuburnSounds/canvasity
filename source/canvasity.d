@@ -3968,9 +3968,11 @@ private
         {
             this.type = other.type;
             colors.clearContents();
-            colors.pushBack(cast(Vec!rgba)other.colors);
+	    Vec!rgba* pcol = cast(Vec!rgba*)&other.colors; // const_cast
+            colors.pushBack(*pcol);
             stops.clearContents();
-            stops.pushBack(cast(Vec!float)other.stops);
+	    Vec!float* pstops = cast(Vec!float*)&other.stops;
+            stops.pushBack(*pstops);
             this.start = other.start;
             this.end = other.end;
             this.start_radius = other.start_radius;
@@ -3995,7 +3997,9 @@ private
     void assign_vec(T)(ref Vec!T a, ref const(Vec!T) b)
     {
         a.clearContents();
-        a.pushBack(cast(Vec!T) b);
+	// Useful to be compatible as far as LDC 1.20
+	Vec!T* p = cast(Vec!T*)&b; // const_cast
+        a.pushBack(*p);
     }
 
     void swap_brush(ref paint_brush a, 
@@ -4018,7 +4022,8 @@ private
         void opAssign(ref const(font_face) other)
         {
             data.clearContents();
-            data.pushBack(cast(Vec!ubyte) other.data);
+	    Vec!ubyte* p = cast(Vec!ubyte*)&other.data;
+            data.pushBack(*p);
             this.cmap = other.cmap;
             this.glyf = other.glyf;
             this.head = other.head;
