@@ -17,7 +17,7 @@ void render(PixelType type, PixelType beforeWrite, string filepath)
     enum int width = 256, height = 256;
 
     Image image;
-    image.createNoInit(width, height, type); // rgba8
+    image.create(width, height, type); // rgba8
 
     Canvasity context = Canvasity(image);
 
