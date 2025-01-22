@@ -4,7 +4,7 @@
 	"description": "Canvas library, port of canvas_ity.h",
 
 	"dependencies": {
-		"dplug:core": "~>14.0",
+		"dplug:core": ">=14.0.0 <16.0.0",
 		"gamut": "~>3.0",
 		"intel-intrinsics": "~>1.0",
 		"colors": "~>0.0",
