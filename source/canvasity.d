@@ -320,6 +320,8 @@ public:
     void initialize(ref Image buffer,
                     CanvasOptions options = CanvasOptions.init) {
 
+        initialized = true;
+
         // Initialize as reference.
         outBitmap = buffer.layer(0);
 
@@ -373,6 +375,9 @@ public:
     }
 
     ~this() {
+
+        if (!initialized)
+            return;
 
         // free each State
         size_t stackSize = (maxSaveRestoreDepth + 1);
@@ -2108,6 +2113,7 @@ private:
     line_path scratch;
     Vec!pixel_run runs;
 
+    bool initialized = false;
     Image outBitmap;
 
     Vec!float shadow;
@@ -4098,4 +4104,12 @@ private
         }
         v[index] = value;
     }
+}
+
+// .init must be valid and survive .destroyNoGC
+unittest
+{
+    Canvasity c;
+    destroyNoGC(c);
+    destroyNoGC(c);
 }
