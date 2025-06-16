@@ -1337,10 +1337,11 @@ public:
             start_angle      Radians clockwise from x-axis to begin.
             end_angle        Radians clockwise from x-axis to end.
             counterClockwise `true` if arc turns counter-clockwise.
+                             The default is false (clockwise).
     */        
     void arc(float x, float y, float radius, 
              float start_angle, float end_angle, 
-             bool counter_clockwise) {
+             bool counter_clockwise = false) {
 
         if (radius < 0)
             return;
@@ -1383,7 +1384,7 @@ public:
     }
     ///ditto
     void arc(T)(T p, float radius,  float start_angle, 
-                float end_angle, bool counter_clockwise) {
+                float end_angle, bool counter_clockwise = false) {
         // support point types
         arc(p.x, p.y, radius, start_angle, end_angle, counter_clockwise);
     }
