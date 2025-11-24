@@ -404,8 +404,8 @@ public:
         If either is zero, most drawing operations will do nothing.
 
         Params:
-            x Horizontal scaling factor.
-            y Vertical scaling factor.
+            x = Horizontal scaling factor.
+            y = Vertical scaling factor.
     */
     @savedBySaveRestore
     void scale(float x, float y) {
@@ -424,7 +424,7 @@ public:
               translate back.
 
         Params:
-            angle Clockwise angle in radians.
+            angle = Clockwise angle in radians.
     */
     @savedBySaveRestore
     void rotate(float angle) {
@@ -442,8 +442,8 @@ public:
         shift up, and negative y values shift down.
     
         Params:
-            x Amount to shift horizontally.
-            y Amount to shift vertically.
+            x = Amount to shift horizontally.
+            y = Amount to shift vertically.
     */
     @savedBySaveRestore
     void translate(float x, float y) {
@@ -464,12 +464,12 @@ public:
         operations will do nothing.
 
         Params:
-            a  Horizontal scaling factor (m11).
-            b  Vertical skewing (m12).
-            c  Horizontal skewing (m21).
-            d  vertical scaling factor (m22).
-            e  Horizontal translation (m31).
-            f  Vertical translation (m32).
+            a  = Horizontal scaling factor (m11).
+            b  = Vertical skewing (m12).
+            c  = Horizontal skewing (m21).
+            d  = vertical scaling factor (m22).
+            e  = Horizontal translation (m31).
+            f  = Vertical translation (m32).
     */
     @savedBySaveRestore
     void transform(float a, float b, 
@@ -502,12 +502,12 @@ public:
               1.0, 0.0, 0.0, 1.0, 0.0, 0.0.
        
         Params:
-            a Horizontal scaling factor (m11).
-            b Vertical skewing (m12).
-            c Horizontal skewing (m21).
-            d Vertical scaling factor (m22).
-            e Horizontal translation (m31).
-            f Vertical translation (m32).
+            a = Horizontal scaling factor (m11).
+            b = Vertical skewing (m12).
+            c = Horizontal skewing (m21).
+            d = Vertical scaling factor (m22).
+            e = Horizontal translation (m31).
+            f = Vertical translation (m32).
     */
     @savedBySaveRestore
     void setTransform(float a, float b, 
@@ -1401,10 +1401,10 @@ public:
         negative or zero, and this can affect the winding direction.
        
         Params:
-            x       Horizontal coordinate of a rectangle corner.
-            y       Vertical coordinate of a rectangle corner.
-            width   Width of the rectangle.
-            height  Height of the rectangle.
+            x       = Horizontal coordinate of a rectangle corner.
+            y       = Vertical coordinate of a rectangle corner.
+            width   = Width of the rectangle.
+            height  = Height of the rectangle.
     */       
     void rect(float x, float y, float width, float height) {
         moveTo(x, y);
@@ -1538,8 +1538,8 @@ public:
         this test.
        
         Params:
-            x  Horizontal coordinate of the point to test.
-            y  Vertical coordinate of the point to test.
+            x  = Horizontal coordinate of the point to test.
+            y  = Vertical coordinate of the point to test.
         Returns: `true` if the point is in or on the current path.
     */       
     bool isPointInPath(float x, float y) {
@@ -1592,10 +1592,10 @@ public:
         invertible, this does nothing.
        
         Params:
-            x       Horizontal coordinate of rectangle corner.
-            y       Vertical coordinate of rectangle corner.
-            width   Width of the rectangle.
-            height  Height of the rectangle.
+            x       = Horizontal coordinate of rectangle corner.
+            y       = Vertical coordinate of rectangle corner.
+            width   = Width of the rectangle.
+            height  = Height of the rectangle.
     */       
     void clearRect(float x, float y, float width, float height) {
 
@@ -1630,10 +1630,10 @@ public:
         this does nothing.
        
         Params:
-            x   Horizontal coordinate of a rectangle corner.
-            y   Vertical coordinate of a rectangle corner.
-            w   Width of the rectangle.
-            h   Height of the rectangle.
+            x   = Horizontal coordinate of a rectangle corner.
+            y   = Vertical coordinate of a rectangle corner.
+            w   = Width of the rectangle.
+            h   = Height of the rectangle.
     */       
     void fillRect(float x, float y, float w, float h) {
 
@@ -1668,10 +1668,10 @@ public:
         line.
        
         Params:
-            x  Horizontal coordinate of a rectangle corner.
-            y  Vertical coordinate of a rectangle corner.
-            w  Width of the rectangle.
-            h  Height of the rectangle.
+            x  = Horizontal coordinate of a rectangle corner.
+            y  = Vertical coordinate of a rectangle corner.
+            w  = Width of the rectangle.
+            h  = Height of the rectangle.
     */       
     void strokeRect(float x, float y, float w, float h) {
         if ( w == 0.0f && h == 0.0f )
@@ -1716,9 +1716,9 @@ public:
         secure; only use this with trusted TTF files!
        
         Params:
-            font   Contents of a TrueType font (TTF) file.
-            bytes  Number of bytes in the font file.
-            size   Size in pixels per em to draw at.
+            font   = Contents of a TrueType font (TTF) file.
+            bytes  = Number of bytes in the font file.
+            size   = Size in pixels per em to draw at.
 
         Returns: 
             `true` if the font was set successfully.
@@ -1817,10 +1817,10 @@ public:
         the current transform is not invertible, this does nothing.
        
         Params:
-            text      Null-terminated UTF-8 string of text to fill.
-            x         Horizontal coordinate of the anchor point.
-            y         Vertical coordinate of the anchor point.
-            maxWidth  Horizontal width to condense wider text to.
+            text      = Null-terminated UTF-8 string of text to fill.
+            x         = Horizontal coordinate of the anchor point.
+            y         = Vertical coordinate of the anchor point.
+            maxWidth  = Horizontal width to condense wider text to.
     */
     // TODO: take regular D string instead
     void fillText(const(char)* text, float x, float y, 
@@ -1847,10 +1847,10 @@ public:
         the current transform is not invertible, this does nothing.
         
         Params:
-            text      Null-terminated UTF-8 string to stroke.
-            x         Horizontal coordinate of the anchor point.
-            y         Vertical coordinate of the anchor point.
-            maxWidth  Horizontal width to condense wider text to.
+            text     = Null-terminated UTF-8 string to stroke.
+            x        = Horizontal coordinate of the anchor point.
+            y        = Vertical coordinate of the anchor point.
+            maxWidth = Horizontal width to condense wider text to.
     */       
     void stroke_text(const(char)* text, 
                      float x, float y, 
@@ -1872,7 +1872,7 @@ public:
         setting of it was unsuccessful, this returns zero.
 
         Params:
-            text  Null-terminated UTF-8 string to measure.
+            text = Null-terminated UTF-8 string to measure.
 
         Returns:
             Width of the text in pixels.
@@ -1917,14 +1917,14 @@ public:
               the stride.
        
         Params:
-            image      Unpremultiplied sRGB RGBA8 image data.
-            width      Width of the image in pixels.
-            height     Height of the image in pixels.
-            stride     Bytes between the start of each image row.
-            x          Horizontal coordinate to draw the corner at.
-            y          Vertical coordinate to draw the corner at.
-            to_width   Width to scale the image to.
-            to_height  Height to scale the image to.
+            image     = Unpremultiplied sRGB RGBA8 image data.
+            width     = Width of the image in pixels.
+            height    = Height of the image in pixels.
+            stride    = Bytes between the start of each image row.
+            x         = Horizontal coordinate to draw the corner at.
+            y         = Vertical coordinate to draw the corner at.
+            to_width  = Width to scale the image to.
+            to_height = Height to scale the image to.
     */       
     void drawImage(const(ubyte)* image,
                    int width,
