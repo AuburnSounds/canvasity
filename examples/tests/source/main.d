@@ -18,7 +18,9 @@
 import canvasity;
 import gamut;
 import std.stdio;
+import std.math;
 import std.conv;
+import colors;
 
 
 
@@ -116,18 +118,21 @@ struct test_entry
 static immutable test_entry[] tests = 
 [
     test_entry( 0xc99ddee7, 256, 256, &scale_uniform, "scale_uniform" ),
-    test_entry( 0x05a0e377, 256, 256, &test_rotate, "rotate" ),
-
-    /+
     test_entry( 0xe93d3c6f, 256, 256, &scale_non_uniform, "scale_non_uniform" ),
     test_entry( 0x05a0e377, 256, 256, &test_rotate, "rotate" ),
     test_entry( 0x36e7fa56, 256, 256, &test_translate, "translate" ),
     test_entry( 0xcfae3e4f, 256, 256, &test_transform, "transform" ),
-    test_entry( 0x98f5594a, 256, 256, &transform_fill, "transform_fill" ),
     test_entry( 0x822964b0, 256, 256, &transform_stroke, "transform_stroke" ),
     test_entry( 0xb7056a3a, 256, 256, &test_set_transform, "set_transform" ),
     test_entry( 0x8f6dd6c3, 256, 256, &test_global_alpha, "global_alpha" ),
     test_entry( 0x98a0609d, 256, 256, &test_global_composite_operation, "global_composite_operation" ),
+    
+    // Pattern not yet HTML-style in canvasity FUTURE
+    //test_entry( 0x98f5594a, 256, 256, &transform_fill, "transform_fill" ),
+
+    /+   
+
+    
     test_entry( 0x9def5b00, 256, 256, &shadow_color, "shadow_color" ),
     test_entry( 0x8294edd8, 256, 256, &shadow_offset, "shadow_offset" ),
     test_entry( 0xcdeba51c, 256, 256, &shadow_offset_offscreen, "shadow_offset_offscreen" ),
@@ -222,7 +227,7 @@ float CI_MAXF(float a, float b)
     return a > b ? a : b;
 }
 
-static void test_rotate(Canvasity *ctx, float width, float height)
+void test_rotate(Canvasity *ctx, float width, float height)
 {
     ctx.strokeStyle = "rgba(0, 0, 0, 1)";
     for (int step = 0; step < 64; ++step)
@@ -232,7 +237,61 @@ static void test_rotate(Canvasity *ctx, float width, float height)
     }
 }
 
-static void scale_uniform(Canvasity *ctx, float width, float height)
+void scale_non_uniform(Canvasity *ctx, float width, float height)
+{
+    float[1] segments;
+    segments[0] = 4.0f;
+    ctx.strokeStyle = "rgba(0.0, 0.0, 0.0, 1.0)";
+    ctx.setLineDash(segments);
+    ctx.scale(4.0f, 0.5f);
+    ctx.strokeRect(width * 0.125f / 4.0f, height * 0.125f / 0.5f,
+                   width * 0.75f / 4.0f, height * 0.75f / 0.5f);
+}
+
+void transform_stroke(Canvasity *ctx, float width, float height)
+{
+    float[4] segments;
+    segments[0] = 22.0f; segments[1] = 8.0f;
+    segments[2] = 10.0f; segments[3] = 8.0f;
+    ctx.strokeStyle = "rgba(0.0, 0.0, 0.0, 1.0)";
+    ctx.lineWidth = 8.0f;
+    ctx.setLineDash(segments);
+    ctx.beginPath();
+    ctx.arc(width * 0.5f, height * 0.5f, CI_MINF(width, height) * 0.4f,
+            0.0f, 6.28318531f, false);
+    ctx.closePath();
+    ctx.transform(1.0f, 1.0f, 0.0f, 2.0f, 0.0f, 0.0f);
+    ctx.stroke();
+}
+
+void test_transform(Canvasity *ctx, float width, float height)
+{
+    int step;
+    ctx.strokeStyle = "rgba(0.0, 0.0, 0.0, 1.0)";
+    for (step = 0; step < 8; ++step)
+    {
+        ctx.transform(1.0f, 0.0f, 0.1f, 1.0f, width * -0.05f, 0.0f);
+        ctx.strokeRect(width * 0.25f, height * 0.25f,
+                       width * 0.5f, height * 0.5f);
+    }
+}
+
+void test_translate(Canvasity *ctx, float width, float height)
+{
+    float step;
+    ctx.strokeStyle = "rgba(0.0, 0.0, 0.0, 1.0)";
+    for (step = 0.0f; step < 32.0f; step += 1.0f)
+    {
+        ctx.translate((0.5f - step / 32.0f) * width * 0.2f,
+                      height / 32.0f);
+        ctx.beginPath();
+        ctx.arc(0.0f, 0.0f, width * 0.125f, 0.0f, 6.28318531f, false);
+        ctx.closePath();
+        ctx.stroke();
+    }
+}
+
+void scale_uniform(Canvasity *ctx, float width, float height)
 {
     float size;
     float[1] segments;
@@ -245,4 +304,90 @@ static void scale_uniform(Canvasity *ctx, float width, float height)
         ctx.scale(2.0f, 2.0f);
         ctx.strokeRect(0.0f, 0.0f, 8.0f, 8.0f);
     }
+}
+
+
+
+void test_set_transform(Canvasity *ctx, float width, float height)
+{
+    ctx.strokeStyle = "black"; 
+    for (int step = 0; step < 8; ++step)
+        ctx.setTransform(1.0f, 0.0f, 0.1f, 1.0f, width * -0.05f, 0.0f);
+    ctx.strokeRect(width * 0.25f, height * 0.25f, width * 0.5f, height * 0.5f);
+}
+
+void test_global_alpha(Canvasity *ctx, float width, float height)
+{
+    float y, x;
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3.0f;
+    for (y = 0.0f; y < 6.0f; y += 1.0f)
+        for (x = 0.0f; x < 6.0f; x += 1.0f)
+        {   
+            ctx.fillStyle = RGBAf(x / 5.0f, 1.0f, y / 5.0f, x / 5.0f);
+            ctx.globalAlpha = y / 4.0f - 0.25f;
+            ctx.beginPath;
+            ctx.rect(      (x + 0.1f) / 6.0f * width, (y + 0.1f) / 6.0f * height,
+                            0.8f / 6.0f * width, 0.8f / 6.0f * height);
+            ctx.fill;
+            ctx.stroke;
+        }
+}
+
+void test_global_composite_operation(Canvasity *ctx, float width, float height)
+{
+    string[] operations = [
+        "source-in",        // 0
+        "copy",             // 1
+        "source-out",       // 2
+        "destination-in",   // 3
+        "destination-atop", // 4
+        "lighter",          // 5
+        "destination-over", // 6
+        "destination-out",  // 7
+        "source-atop",      // 8
+        "source-over",      // 9
+        "xor"               // 10
+    ];
+
+    const boxWidth = 0.25 * width;
+    const boxHeight = 0.25 * height;
+
+    for(int index = 0; index < operations.length; ++index)
+    {
+        const column = index % 4;
+        int row = index / 4;
+
+        // uncomment save/restore to reproduce Issue 8
+
+    //    ctx.save();
+
+        // Define the clipping region for this specific operation box
+       // ctx.beginPath();
+       // ctx.rect(column * boxWidth, row * boxHeight, boxWidth, boxHeight);
+       // ctx.clip();
+
+        // Draw the Destination (Blue Rectangle)
+        ctx.fillStyle = "rgba(0, 0, 255, 1.0)"; // Blue
+        ctx.fillRect(
+                     (column + 0.4) * boxWidth,
+                     (row + 0.4) * boxHeight,
+                     0.4 * boxWidth,
+                     0.4 * boxHeight
+                     );
+
+        // Set the composite operation
+        ctx.globalCompositeOperation = operations[index];
+
+        // Draw the Source (Red Rectangle)
+        ctx.fillStyle = "rgba(255, 0, 0, 1.0)"; // Red
+        ctx.fillRect(
+                     (column + 0.2) * boxWidth,
+                     (row + 0.2) * boxHeight,
+                     0.4 * boxWidth,
+                     0.4 * boxHeight
+                     );
+
+   //     ctx.restore();
+    };
 }
