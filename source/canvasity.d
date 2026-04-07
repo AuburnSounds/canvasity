@@ -2006,8 +2006,9 @@ public:
         // PERF: states are still kept in the stack, so that their 
         // allocations are reused
         // First push a .init state without data
-        int lastTop = _stateCount++;
+        int lastTop = _stateCount - 1;
         _state[lastTop + 1] = _state[lastTop];
+        _stateCount++;
         assert(_stateCount <= maxSaveRestoreDepth);
     }
 

@@ -125,7 +125,7 @@ static immutable test_entry[] tests =
     test_entry( 0x822964b0, 256, 256, &transform_stroke, "transform_stroke" ),
     test_entry( 0xb7056a3a, 256, 256, &test_set_transform, "set_transform" ),
     test_entry( 0x8f6dd6c3, 256, 256, &test_global_alpha, "global_alpha" ),
-    test_entry( 0x98a0609d, 256, 256, &test_global_composite_operation, "global_composite_operation" ),
+    test_entry( 0x98a0609d, 256, 256, &test_global_composite_operation, "global_composite_operation" ), 
     
     // Pattern not yet HTML-style in canvasity FUTURE
     //test_entry( 0x98f5594a, 256, 256, &transform_fill, "transform_fill" ),
@@ -360,15 +360,10 @@ void test_global_composite_operation(Canvasity *ctx, float width, float height)
 
         // uncomment save/restore to reproduce Issue 8
 
-    //    ctx.save();
-
-        // Define the clipping region for this specific operation box
-       // ctx.beginPath();
-       // ctx.rect(column * boxWidth, row * boxHeight, boxWidth, boxHeight);
-       // ctx.clip();
+        ctx.save();
 
         // Draw the Destination (Blue Rectangle)
-        ctx.fillStyle = "rgba(0, 0, 255, 1.0)"; // Blue
+        ctx.fillStyle = "blue"; // Blue
         ctx.fillRect(
                      (column + 0.4) * boxWidth,
                      (row + 0.4) * boxHeight,
@@ -380,7 +375,7 @@ void test_global_composite_operation(Canvasity *ctx, float width, float height)
         ctx.globalCompositeOperation = operations[index];
 
         // Draw the Source (Red Rectangle)
-        ctx.fillStyle = "rgba(255, 0, 0, 1.0)"; // Red
+        ctx.fillStyle = "red"; // Red
         ctx.fillRect(
                      (column + 0.2) * boxWidth,
                      (row + 0.2) * boxHeight,
@@ -388,6 +383,6 @@ void test_global_composite_operation(Canvasity *ctx, float width, float height)
                      0.4 * boxHeight
                      );
 
-   //     ctx.restore();
+        ctx.restore();
     };
 }
